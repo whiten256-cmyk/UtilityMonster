@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utility Monster Simulation - Manual Play</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #229954;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .game-controls {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .reorder-controls {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .processing-order-controls {
+            background: #e8f5e8;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .processing-order-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .processing-order-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .processing-order-item {
+            background: #27ae60;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .processing-order-item:hover {
+            background: #229954;
+            transform: translateY(-1px);
+        }
+
+        .processing-order-item.dragging {
+            opacity: 0.5;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .card-item {
+            background: white;
+            border-radius: 6px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            position: relative;
+            min-height: 200px;
+        }
+
+        .card-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+
+        .card-item:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .card-title {
+            font-size: 1em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .card-order-number {
+            background: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.8em;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            padding: 2px;
+            color: #7f8c8d;
+            font-size: 1em;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card-display {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 8px;
+        }
+
+        .grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8em;
+        }
+
+        .grid-table th,
+        .grid-table td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: center;
+        }
+
+        .grid-table th {
+            background-color: #e9ecef;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .text-card-content {
+            background: #e3f2fd;
+            border-radius: 4px;
+            padding: 8px;
+            font-style: italic;
+            color: #1565c0;
+            font-size: 0.8em;
+        }
+
+        .voting-area {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 8px;
+        }
+
+        .voting-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .player-votes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .player-vote {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .player-vote label {
+            font-weight: 500;
+            color: #2c3e50;
+            font-size: 0.9em;
+        }
+
+        .vote-buttons {
+            display: flex;
+            gap: 3px;
+        }
+
+        .vote-btn {
+            padding: 6px 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            font-size: 0.8em;
+        }
+
+        .vote-btn.yes {
+            border-color: #27ae60;
+            color: #27ae60;
+        }
+
+        .vote-btn.yes.selected {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .vote-btn.no {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        .vote-btn.no.selected {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .vote-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .vote-input {
+            padding: 6px;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            width: 80px;
+            font-family: monospace;
+        }
+
+        .vote-input:focus {
+            outline: none;
+            border-color: #2980b9;
+            box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+
+        .vote-help {
+            font-size: 10px;
+            color: #7f8c8d;
+            text-align: center;
+            max-width: 200px;
+            line-height: 1.2;
+        }
+
+        .voting-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .scores-before {
+            background: #fff3cd;
+            border-radius: 4px;
+            padding: 6px;
+            font-size: 10px;
+            line-height: 1.2;
+            min-width: 80px;
+        }
+
+        .scores-before .score-title {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 2px;
+            text-align: center;
+        }
+
+        .scores-before .player-score {
+            display: flex;
+            justify-content: space-between;
+            color: #856404;
+            margin: 1px 0;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .player-result {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .player-result.winner {
+            background: #d4edda;
+            border: 2px solid #27ae60;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .score-breakdown {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .total-score {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .game-summary {
+            background: #e3f2fd;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .card-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Utility Monster Simulation</h1>
+            <p class="subtitle">Manual Play Mode - Set votes for any card, reorder anytime</p>
+            <p id="loadStatus" style="margin-top: 10px; font-weight: 500;">Loading cards...</p>
+        </header>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="startNewGame()">New Game</button>
+        </div>
+
+        <div class="game-controls" id="gameControls" style="display: none;">
+            <div class="reorder-controls">
+                <button class="btn btn-warning" onclick="toggleReorderMode()">Enable Display Reordering</button>
+                <span id="reorderInstructions" style="display: none; margin-left: 15px; color: #6c757d;">
+                    Drag cards to reorder them, then click "Done Reordering"
+                </span>
+            </div>
+            <div class="processing-order-controls">
+                <div class="processing-order-title">Processing Order (affects "Eat The Rich" calculations)</div>
+                <div class="processing-order-list" id="processingOrderList">
+                    <!-- Processing order items will be inserted here -->
+                </div>
+                <button class="btn btn-warning" onclick="toggleProcessingOrderMode()">Enable Processing Order</button>
+                <span id="processingOrderInstructions" style="display: none; margin-left: 15px; color: #6c757d;">
+                    Drag to reorder processing sequence
+                </span>
+            </div>
+            <div style="margin-top: 15px;">
+                <button class="btn btn-success" onclick="calculateScores()">Calculate Final Scores</button>
+            </div>
+        </div>
+
+        <div class="cards-container" id="cardsContainer">
+            <!-- Cards will be dynamically inserted here -->
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <h3>Game Results</h3>
+            <div class="results-grid" id="resultsGrid"></div>
+            <div class="game-summary" id="gameSummary"></div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let cards = [];
+        let currentGame = null;
+        let isReorderMode = false;
+
+        // Load cards directly (embedded in code)
+        function loadCards() {
+            cards = [
+                {
+                    "id": "mebrzezivqa9bqn44ec",
+                    "name": "The Countdown",
+                    "type": "grid",
+                    "data": {
+                        "0": {"yes": "N/A", "no": 0},
+                        "1": {"yes": 6, "no": 0},
+                        "2": {"yes": 5, "no": 0},
+                        "3": {"yes": 4, "no": 0},
+                        "4": {"yes": 3, "no": 0},
+                        "5": {"yes": 2, "no": 0},
+                        "6": {"yes": 1, "no": "N/A"}
+                    }
+                },
+                {
+                    "id": "mebs3h12nwy0rya9s4",
+                    "name": "The Warmup",
+                    "type": "grid",
+                    "data": {
+                        "0": {"yes": "N/A", "no": 1},
+                        "1": {"yes": 1, "no": 1},
+                        "2": {"yes": 1, "no": 1},
+                        "3": {"yes": 1, "no": 1},
+                        "4": {"yes": 1, "no": 1},
+                        "5": {"yes": 1, "no": 1},
+                        "6": {"yes": 1, "no": "N/A"}
+                    }
+                },
+                {
+                    "id": "mebs4gozwhifaer8jxc",
+                    "name": "The Threesome",
+                    "type": "grid",
+                    "data": {
+                        "0": {"yes": "N/A", "no": 0},
+                        "1": {"yes": 0, "no": 0},
+                        "2": {"yes": 0, "no": 0},
+                        "3": {"yes": 6, "no": 1},
+                        "4": {"yes": 0, "no": 0},
+                        "5": {"yes": 0, "no": 0},
+                        "6": {"yes": 0, "no": "N/A"}
+                    }
+                },
+                {
+                    "id": "mebsc6borauft485vcb",
+                    "name": "Eat The Rich",
+                    "type": "text",
+                    "content": "If 4 or more players vote YES collect the utils from all players in first or tied for first and distribute them evenly to the other players. If there is a remainder leave it with the original players."
+                },
+                {
+                    "id": "mebscpyjxmkbtp8gjxe",
+                    "name": "The Wedding",
+                    "type": "grid",
+                    "data": {
+                        "0": {"yes": "N/A", "no": 0},
+                        "1": {"yes": 0, "no": 0},
+                        "2": {"yes": 11, "no": 1},
+                        "3": {"yes": 0, "no": 0},
+                        "4": {"yes": 0, "no": 0},
+                        "5": {"yes": 0, "no": 0},
+                        "6": {"yes": 0, "no": "N/A"}
+                    }
+                },
+                {
+                    "id": "mebsdqoiwp851s6s75k",
+                    "name": "The Switch",
+                    "type": "grid",
+                    "data": {
+                        "0": {"yes": "N/A", "no": 0},
+                        "1": {"yes": 10, "no": 0},
+                        "2": {"yes": 10, "no": 0},
+                        "3": {"yes": 10, "no": 0},
+                        "4": {"yes": 0, "no": 15},
+                        "5": {"yes": 0, "no": 15},
+                        "6": {"yes": 0, "no": "N/A"}
+                    }
+                },
+                {
+                    "id": "mebsgdddgo468u07p6u",
+                    "name": "Bonnie and Clyde",
+                    "type": "grid",
+                    "data": {
+                        "0": {"yes": "N/A", "no": 0},
+                        "1": {"yes": 0, "no": 0},
+                        "2": {"yes": 0, "no": 0},
+                        "3": {"yes": 0, "no": 0},
+                        "4": {"yes": 0, "no": 13},
+                        "5": {"yes": 0, "no": 0},
+                        "6": {"yes": 5, "no": "N/A"}
+                    }
+                }
+            ];
+            
+            console.log('Loaded cards:', cards.length);
+            document.getElementById('loadStatus').textContent = `Loaded ${cards.length} cards successfully!`;
+            document.getElementById('loadStatus').style.color = '#27ae60';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCards();
+        });
+
+        // Game class
+        class Game {
+            constructor(playerCount, cardOrder = null) {
+                this.playerCount = playerCount;
+                this.players = Array.from({length: playerCount}, (_, i) => ({
+                    id: i,
+                    name: `Player ${i + 1}`,
+                    personalScore: 0,
+                    teamScore: 0,
+                    totalScore: 0
+                }));
+                this.cardOrder = cardOrder || this.shuffleCards();
+                this.processingOrder = [...this.cardOrder]; // Separate processing order
+                this.cardVotes = {}; // Store votes for each card by ID
+                
+                // Initialize all votes to YES by default
+                this.cardOrder.forEach(card => {
+                    this.cardVotes[card.id] = Array(this.playerCount).fill('yes');
+                });
+            }
+
+            shuffleCards() {
+                const shuffled = [...cards];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+
+            // Simple direct access to votes - no complex getters/setters
+            getVotes(cardId) {
+                return this.cardVotes[cardId] || Array(this.playerCount).fill('yes');
+            }
+
+            calculateFinalScores() {
+                // Reset all player scores
+                this.players.forEach(player => {
+                    player.personalScore = 0;
+                    player.teamScore = 0;
+                    player.totalScore = 0;
+                });
+
+                // Calculate scores for each card in PROCESSING order (not display order)
+                this.processingOrder.forEach((card, index) => {
+                    const votes = this.getVotes(card.id);
+
+                    if (card.type === 'grid') {
+                        const yesCount = votes.filter(v => v === 'yes').length;
+                        const rowData = card.data[yesCount];
+                        
+                        for (let i = 0; i < this.playerCount; i++) {
+                            const vote = votes[i];
+                            const reward = vote === 'yes' ? 
+                                (rowData.yes === 'N/A' ? 0 : rowData.yes) : 
+                                (rowData.no === 'N/A' ? 0 : rowData.no);
+                            
+                            this.players[i].personalScore += reward;
+                        }
+                    } else if (card.type === 'text') {
+                        this.handleTextCard(card, votes);
+                    }
+                });
+
+                // Calculate team scores (sum of all personal scores)
+                const totalPersonalScore = this.players.reduce((sum, p) => sum + p.personalScore, 0);
+                
+                this.players.forEach(player => {
+                    player.teamScore = totalPersonalScore;
+                    player.totalScore = player.personalScore + player.teamScore;
+                });
+
+                // Find winner(s)
+                const maxScore = Math.max(...this.players.map(p => p.totalScore));
+                this.players.forEach(p => p.isWinner = p.totalScore === maxScore);
+            }
+
+            handleTextCard(card, votes) {
+                if (card.name === 'Eat The Rich') {
+                    const yesCount = votes.filter(v => v === 'yes').length;
+                    
+                    if (yesCount >= 4) {
+                        // Find players tied for first place
+                        const maxScore = Math.max(...this.players.map(p => p.personalScore));
+                        const richPlayers = this.players.filter(p => p.personalScore === maxScore);
+                        const poorPlayers = this.players.filter(p => p.personalScore < maxScore);
+                        
+                        if (richPlayers.length > 0 && poorPlayers.length > 0) {
+                            // Collect all utils from rich players
+                            const totalUtils = richPlayers.reduce((sum, p) => sum + p.personalScore, 0);
+                            
+                            // Reset rich players to 0
+                            richPlayers.forEach(p => p.personalScore = 0);
+                            
+                            // Distribute evenly to poor players
+                            const utilsPerPoor = Math.floor(totalUtils / poorPlayers.length);
+                            const remainder = totalUtils % poorPlayers.length;
+                            
+                            poorPlayers.forEach(p => p.personalScore += utilsPerPoor);
+                            
+                            // Give remainder back to rich players (distributed evenly)
+                            if (remainder > 0) {
+                                const remainderPerRich = Math.floor(remainder / richPlayers.length);
+                                const finalRemainder = remainder % richPlayers.length;
+                                
+                                richPlayers.forEach((p, i) => {
+                                    p.personalScore += remainderPerRich;
+                                    if (i < finalRemainder) p.personalScore += 1;
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // UI Functions
+        function startNewGame() {
+            const playerCount = 6; // Fixed to 6 players
+            currentGame = new Game(playerCount);
+            
+            document.getElementById('gameControls').style.display = 'block';
+            renderCards();
+            renderProcessingOrder();
+        }
+
+        function renderProcessingOrder() {
+            const container = document.getElementById('processingOrderList');
+            container.innerHTML = '';
+            
+            currentGame.processingOrder.forEach((card, index) => {
+                const item = document.createElement('div');
+                item.className = 'processing-order-item';
+                item.textContent = card.name;
+                item.dataset.cardId = card.id;
+                container.appendChild(item);
+            });
+        }
+
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
+
+            currentGame.cardOrder.forEach((card, index) => {
+                const cardElement = createCardElement(card, index);
+                container.appendChild(cardElement);
+            });
+
+            if (!isReorderMode) {
+                enableCardInteraction();
+            }
+        }
+
+        function createCardElement(card, index) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card-item';
+            cardDiv.dataset.cardId = card.id;
+            cardDiv.dataset.cardIndex = index;
+
+            let cardContent = '';
+            if (card.type === 'grid') {
+                cardContent = `
+                    <table class="grid-table">
+                        <thead>
+                            <tr><th>#</th><th>YES</th><th>NO</th></tr>
+                        </thead>
+                        <tbody>
+                            ${Object.keys(card.data).map(row => `
+                                <tr>
+                                    <td>${row}</td>
+                                    <td>${card.data[row].yes}</td>
+                                    <td>${card.data[row].no}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                cardContent = `<div class="text-card-content">${card.content}</div>`;
+            }
+
+            const votes = currentGame.getVotes(card.id);
+            
+            cardDiv.innerHTML = `
+                <div class="card-header">
+                    <div class="card-title">${card.name}</div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="card-order-number">#${index + 1}</div>
+                        <div class="drag-handle" style="display: none;">⋮⋮</div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="card-display">
+                        ${cardContent}
+                    </div>
+                    <div class="voting-area">
+                        <div class="voting-title">Player Votes (1=YES, 0=NO)</div>
+                        <div class="voting-container">
+                            <div class="scores-before" id="scores-before-${card.id}">
+                                <!-- Scores before this card will be inserted here -->
+                            </div>
+                            <div class="vote-input-container">
+                                <input type="text" 
+                                       class="vote-input" 
+                                       id="votes-${card.id}"
+                                       value="${getVoteString(card.id)}"
+                                       placeholder="111111"
+                                       maxlength="6"
+                                       onchange="updateCardVotes('${card.id}', this.value)">
+                                <div class="vote-help">Enter 6 digits: 1=YES, 0=NO</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Update scores before this card
+            updateScoresBefore(card.id, index);
+            
+            return cardDiv;
+        }
+
+        function updateScoresBefore(cardId, cardIndex) {
+            const scoresContainer = document.getElementById(`scores-before-${cardId}`);
+            if (!scoresContainer) return;
+            
+            // Find the position of this card in the processing order
+            const processingIndex = currentGame.processingOrder.findIndex(card => card.id === cardId);
+            if (processingIndex === -1) return;
+            
+            // Calculate scores up to but not including this card in processing order
+            const scoresBefore = calculateScoresUpToCard(processingIndex);
+            
+            let html = '<div class="score-title">Scores Before</div>';
+            scoresBefore.forEach((score, playerId) => {
+                html += `<div class="player-score"><span>P${playerId + 1}:</span><span>${score}</span></div>`;
+            });
+            
+            scoresContainer.innerHTML = html;
+        }
+
+        function calculateScoresUpToCard(cardIndex) {
+            // Create temporary players array
+            const tempPlayers = Array.from({length: currentGame.playerCount}, (_, i) => ({
+                personalScore: 0
+            }));
+            
+            // Process cards up to (but not including) the specified card index
+            for (let i = 0; i < cardIndex; i++) {
+                const card = currentGame.processingOrder[i];
+                const votes = currentGame.getVotes(card.id);
+                
+                if (card.type === 'grid') {
+                    const yesCount = votes.filter(v => v === 'yes').length;
+                    const rowData = card.data[yesCount];
+                    
+                    for (let playerId = 0; playerId < currentGame.playerCount; playerId++) {
+                        const vote = votes[playerId];
+                        const reward = vote === 'yes' ? 
+                            (rowData.yes === 'N/A' ? 0 : rowData.yes) : 
+                            (rowData.no === 'N/A' ? 0 : rowData.no);
+                        
+                        tempPlayers[playerId].personalScore += reward;
+                    }
+                } else if (card.type === 'text') {
+                    // Handle text cards like "Eat The Rich"
+                    if (card.name === 'Eat The Rich') {
+                        const yesCount = votes.filter(v => v === 'yes').length;
+                        
+                        if (yesCount >= 4) {
+                            const maxScore = Math.max(...tempPlayers.map(p => p.personalScore));
+                            const richPlayers = tempPlayers.filter(p => p.personalScore === maxScore);
+                            const poorPlayers = tempPlayers.filter(p => p.personalScore < maxScore);
+                            
+                            if (richPlayers.length > 0 && poorPlayers.length > 0) {
+                                const totalUtils = richPlayers.reduce((sum, p) => sum + p.personalScore, 0);
+                                
+                                richPlayers.forEach(p => p.personalScore = 0);
+                                
+                                const utilsPerPoor = Math.floor(totalUtils / poorPlayers.length);
+                                const remainder = totalUtils % poorPlayers.length;
+                                
+                                poorPlayers.forEach(p => p.personalScore += utilsPerPoor);
+                                
+                                if (remainder > 0) {
+                                    const remainderPerRich = Math.floor(remainder / richPlayers.length);
+                                    const finalRemainder = remainder % richPlayers.length;
+                                    
+                                    richPlayers.forEach((p, idx) => {
+                                        p.personalScore += remainderPerRich;
+                                        if (idx < finalRemainder) p.personalScore += 1;
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return tempPlayers.map(p => p.personalScore);
+        }
+
+        function setCardVote(cardId, playerId, vote) {
+            console.log('setCardVote called:', cardId, playerId, vote);
+            
+            // Ensure game exists
+            if (!currentGame) {
+                console.error('No current game!');
+                return;
+            }
+            
+            // Initialize votes if needed
+            if (!currentGame.cardVotes[cardId]) {
+                currentGame.cardVotes[cardId] = Array(currentGame.playerCount).fill('yes');
+                console.log('Initialized votes for card:', cardId);
+            }
+            
+            // Set the vote directly
+            currentGame.cardVotes[cardId][playerId] = vote;
+            console.log('Vote set. Current votes for card:', currentGame.cardVotes[cardId]);
+            
+            // Update UI immediately
+            updateVoteButtonsForCard(cardId);
+        }
+
+        function updateVoteButtonsForCard(cardId) {
+            console.log('updateVoteButtonsForCard called for:', cardId);
+            const cardElement = document.querySelector(`[data-card-id="${cardId}"]`);
+            if (!cardElement) {
+                console.error('Card element not found for:', cardId);
+                return;
+            }
+            
+            const votes = currentGame.cardVotes[cardId] || Array(currentGame.playerCount).fill('yes');
+            console.log('Updating UI with votes:', votes);
+            
+            // Update each player's buttons
+            for (let playerId = 0; playerId < currentGame.playerCount; playerId++) {
+                const playerVoteDiv = cardElement.querySelectorAll('.player-vote')[playerId];
+                if (!playerVoteDiv) continue;
+                
+                const yesBtn = playerVoteDiv.querySelector('.vote-btn.yes');
+                const noBtn = playerVoteDiv.querySelector('.vote-btn.no');
+                
+                if (!yesBtn || !noBtn) {
+                    console.error('Vote buttons not found for player:', playerId);
+                    continue;
+                }
+                
+                // Clear all selections
+                yesBtn.classList.remove('selected');
+                noBtn.classList.remove('selected');
+                
+                // Set current selection
+                if (votes[playerId] === 'yes') {
+                    yesBtn.classList.add('selected');
+                    console.log('Set YES selected for player:', playerId);
+                } else if (votes[playerId] === 'no') {
+                    noBtn.classList.add('selected');
+                    console.log('Set NO selected for player:', playerId);
+                }
+            }
+        }
+
+        // New string-based voting functions
+        function getVoteString(cardId) {
+            if (!currentGame) return '111111';
+            const votes = currentGame.getVotes(cardId);
+            return votes.map(vote => vote === 'yes' ? '1' : '0').join('');
+        }
+
+        function updateCardVotes(cardId, voteString) {
+            if (!currentGame) return;
+            
+            // Only process if it's a valid 6-digit string of 0s and 1s
+            if (/^[01]{6}$/.test(voteString)) {
+                // Convert string to vote array
+                const votes = voteString.split('').map(digit => digit === '1' ? 'yes' : 'no');
+                
+                // Update the game state
+                currentGame.cardVotes[cardId] = votes;
+                
+                // Refresh all score displays since votes changed
+                refreshAllScoreDisplays();
+                
+                // Auto-recalculate final scores
+                currentGame.calculateFinalScores();
+                showResults();
+            }
+            // If invalid, just ignore silently - no alerts or resets
+        }
+
+        function refreshAllScoreDisplays() {
+            if (!currentGame) return;
+            
+            // Update scores for all cards
+            currentGame.cardOrder.forEach((card, index) => {
+                updateScoresBefore(card.id, index);
+            });
+        }
+
+        function toggleReorderMode() {
+            isReorderMode = !isReorderMode;
+            const button = document.querySelector('#gameControls button');
+            const instructions = document.getElementById('reorderInstructions');
+            const dragHandles = document.querySelectorAll('.drag-handle');
+            
+            if (isReorderMode) {
+                button.textContent = 'Done Reordering';
+                button.className = 'btn btn-success';
+                instructions.style.display = 'inline';
+                dragHandles.forEach(handle => handle.style.display = 'block');
+                enableDragAndDrop();
+            } else {
+                button.textContent = 'Enable Reordering';
+                button.className = 'btn btn-warning';
+                instructions.style.display = 'none';
+                dragHandles.forEach(handle => handle.style.display = 'none');
+                disableDragAndDrop();
+                enableCardInteraction();
+            }
+        }
+
+        function enableCardInteraction() {
+            // Re-enable voting buttons
+            document.querySelectorAll('.vote-btn').forEach(btn => {
+                btn.style.pointerEvents = 'auto';
+            });
+        }
+
+        function enableDragAndDrop() {
+            const cardItems = document.querySelectorAll('.card-item');
+            cardItems.forEach(item => {
+                item.draggable = true;
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+
+            // Disable voting during reorder
+            document.querySelectorAll('.vote-btn').forEach(btn => {
+                btn.style.pointerEvents = 'none';
+            });
+        }
+
+        function disableDragAndDrop() {
+            const cardItems = document.querySelectorAll('.card-item');
+            cardItems.forEach(item => {
+                item.draggable = false;
+                item.removeEventListener('dragstart', handleDragStart);
+                item.removeEventListener('dragover', handleDragOver);
+                item.removeEventListener('drop', handleDrop);
+                item.removeEventListener('dragend', handleDragEnd);
+                item.classList.remove('dragging');
+            });
+        }
+
+        let draggedElement = null;
+
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const dropTarget = e.target.closest('.card-item');
+            
+            if (draggedElement && dropTarget && draggedElement !== dropTarget) {
+                const container = document.getElementById('cardsContainer');
+                const draggedIndex = Array.from(container.children).indexOf(draggedElement);
+                const dropIndex = Array.from(container.children).indexOf(dropTarget);
+                
+                // Reorder in the game state
+                const draggedCard = currentGame.cardOrder.splice(draggedIndex, 1)[0];
+                currentGame.cardOrder.splice(dropIndex, 0, draggedCard);
+                
+                // Update processing order to match display order
+                currentGame.processingOrder = [...currentGame.cardOrder];
+                
+                // Re-render both cards and processing order
+                renderCards();
+                renderProcessingOrder();
+                enableDragAndDrop(); // Re-enable drag and drop after re-render
+            }
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedElement = null;
+        }
+
+        // Processing order functionality
+        let isProcessingOrderMode = false;
+        let processingDraggedElement = null;
+
+        function toggleProcessingOrderMode() {
+            isProcessingOrderMode = !isProcessingOrderMode;
+            const button = document.querySelector('.processing-order-controls button');
+            const instructions = document.getElementById('processingOrderInstructions');
+            const processingItems = document.querySelectorAll('.processing-order-item');
+            
+            if (isProcessingOrderMode) {
+                button.textContent = 'Done Processing Order';
+                button.className = 'btn btn-success';
+                instructions.style.display = 'inline';
+                enableProcessingOrderDragAndDrop();
+            } else {
+                button.textContent = 'Enable Processing Order';
+                button.className = 'btn btn-warning';
+                instructions.style.display = 'none';
+                disableProcessingOrderDragAndDrop();
+            }
+        }
+
+        function enableProcessingOrderDragAndDrop() {
+            const processingItems = document.querySelectorAll('.processing-order-item');
+            processingItems.forEach(item => {
+                item.draggable = true;
+                item.addEventListener('dragstart', handleProcessingDragStart);
+                item.addEventListener('dragover', handleProcessingDragOver);
+                item.addEventListener('drop', handleProcessingDrop);
+                item.addEventListener('dragend', handleProcessingDragEnd);
+            });
+        }
+
+        function disableProcessingOrderDragAndDrop() {
+            const processingItems = document.querySelectorAll('.processing-order-item');
+            processingItems.forEach(item => {
+                item.draggable = false;
+                item.removeEventListener('dragstart', handleProcessingDragStart);
+                item.removeEventListener('dragover', handleProcessingDragOver);
+                item.removeEventListener('drop', handleProcessingDrop);
+                item.removeEventListener('dragend', handleProcessingDragEnd);
+                item.classList.remove('dragging');
+            });
+        }
+
+        function handleProcessingDragStart(e) {
+            processingDraggedElement = e.target;
+            e.target.classList.add('dragging');
+        }
+
+        function handleProcessingDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleProcessingDrop(e) {
+            e.preventDefault();
+            const dropTarget = e.target.closest('.processing-order-item');
+            
+            if (processingDraggedElement && dropTarget && processingDraggedElement !== dropTarget) {
+                const container = document.getElementById('processingOrderList');
+                const draggedIndex = Array.from(container.children).indexOf(processingDraggedElement);
+                const dropIndex = Array.from(container.children).indexOf(dropTarget);
+                
+                // Reorder in the processing order
+                const draggedCard = currentGame.processingOrder.splice(draggedIndex, 1)[0];
+                currentGame.processingOrder.splice(dropIndex, 0, draggedCard);
+                
+                // Update display order to match processing order
+                currentGame.cardOrder = [...currentGame.processingOrder];
+                
+                // Re-render both processing order and cards
+                renderProcessingOrder();
+                renderCards();
+                enableProcessingOrderDragAndDrop(); // Re-enable drag and drop after re-render
+            }
+        }
+
+        function handleProcessingDragEnd(e) {
+            e.target.classList.remove('dragging');
+            processingDraggedElement = null;
+        }
+
+        function calculateScores() {
+            if (!currentGame) return;
+
+            // Always allow calculation - no validation needed since all votes default to YES
+            currentGame.calculateFinalScores();
+            showResults();
+        }
+
+        function showResults() {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsGrid = document.getElementById('resultsGrid');
+            const gameSummary = document.getElementById('gameSummary');
+            
+            // Show player results
+            let html = '';
+            currentGame.players.forEach(player => {
+                html += `
+                    <div class="player-result ${player.isWinner ? 'winner' : ''}">
+                        <div class="player-name">${player.name}</div>
+                        <div class="score-breakdown">Personal: ${player.personalScore}</div>
+                        <div class="score-breakdown">Team: ${player.teamScore}</div>
+                        <div class="total-score">${player.totalScore}</div>
+                        ${player.isWinner ? '<div style="color: #27ae60; font-weight: bold;">WINNER!</div>' : ''}
+                    </div>
+                `;
+            });
+            resultsGrid.innerHTML = html;
+            
+            // Show game summary
+            const maxScore = Math.max(...currentGame.players.map(p => p.totalScore));
+            const winners = currentGame.players.filter(p => p.isWinner);
+            
+            gameSummary.innerHTML = `
+                <h4>Game Summary</h4>
+                <p><strong>Maximum Score Achieved:</strong> ${maxScore}</p>
+                <p><strong>Winner(s):</strong> ${winners.map(p => p.name).join(', ')}</p>
+                <p><strong>Total Team Utils:</strong> ${currentGame.players[0].teamScore}</p>
+                <p><strong>Display Order:</strong> ${currentGame.cardOrder.map(c => c.name).join(' → ')}</p>
+                <p><strong>Processing Order:</strong> ${currentGame.processingOrder.map(c => c.name).join(' → ')}</p>
+            `;
+            
+            resultsSection.style.display = 'block';
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

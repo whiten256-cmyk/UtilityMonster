@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utility Monster Simulation - Card Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #229954;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .card.text-card {
+            border-left-color: #27ae60;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .card-type {
+            background-color: #ecf0f1;
+            color: #7f8c8d;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .card-actions .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .card-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .type-option {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .type-option.selected {
+            border-color: #3498db;
+            background-color: #ebf3fd;
+        }
+
+        .type-option:hover {
+            border-color: #bdc3c7;
+        }
+
+        .grid-editor {
+            display: none;
+        }
+
+        .grid-editor.active {
+            display: block;
+        }
+
+        .grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .grid-table th,
+        .grid-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .grid-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .grid-table input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .grid-table input:disabled {
+            background-color: #f8f9fa;
+            color: #7f8c8d;
+        }
+
+        .text-editor {
+            display: none;
+        }
+
+        .text-editor.active {
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #95a5a6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Utility Monster Simulation</h1>
+            <p class="subtitle">Card Management System</p>
+        </header>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="openCreateModal()">+ Create New Card</button>
+            <button class="btn btn-secondary" onclick="exportCards()">Export Cards</button>
+            <button class="btn btn-secondary" onclick="clearAllCards()">Clear All</button>
+        </div>
+
+        <div id="cardsContainer" class="cards-grid">
+            <!-- Cards will be rendered here -->
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <h3>No cards created yet</h3>
+            <p>Click "Create New Card" to get started</p>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="cardModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Create New Card</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+
+            <form id="cardForm">
+                <div class="form-group">
+                    <label class="form-label" for="cardName">Card Name</label>
+                    <input type="text" id="cardName" class="form-input" placeholder="Enter card name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Card Type</label>
+                    <div class="card-type-selector">
+                        <div class="type-option selected" data-type="grid" onclick="selectCardType('grid')">
+                            <strong>Grid Card</strong>
+                            <p>Structured data with YES/NO columns</p>
+                        </div>
+                        <div class="type-option" data-type="text" onclick="selectCardType('text')">
+                            <strong>Text Card</strong>
+                            <p>Free-form text content</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid Editor -->
+                <div id="gridEditor" class="grid-editor active">
+                    <label class="form-label">Grid Data</label>
+                    <table class="grid-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>YES</th>
+                                <th>NO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gridTableBody">
+                            <!-- Grid rows will be generated here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Text Editor -->
+                <div id="textEditor" class="text-editor">
+                    <label class="form-label" for="cardContent">Content</label>
+                    <textarea id="cardContent" class="form-input form-textarea" placeholder="Enter your text content here..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="saveButton">Save Card</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let cards = [];
+        let editingCardId = null;
+        let currentCardType = 'grid';
+
+        // Storage key
+        const STORAGE_KEY = 'utilityMonsterCards';
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCards();
+            renderCards();
+            initializeGridEditor();
+        });
+
+        // Card management functions
+        function loadCards() {
+            // Try to load from local storage first
+            const stored = localStorage.getItem(STORAGE_KEY);
+            cards = stored ? JSON.parse(stored) : [];
+            
+            // Also try to load from cards.json file if it exists
+            loadCardsFromFile();
+        }
+
+        function saveCards() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+            // Also save to file
+            saveCardsToFile();
+        }
+
+        function saveCardsToFile() {
+            const dataStr = JSON.stringify(cards, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'cards.json';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        async function loadCardsFromFile() {
+            try {
+                const response = await fetch('./cards.json');
+                if (response.ok) {
+                    const fileCards = await response.json();
+                    if (fileCards && Array.isArray(fileCards) && fileCards.length > 0) {
+                        cards = fileCards;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+                        renderCards();
+                    }
+                }
+            } catch (error) {
+                // File doesn't exist or can't be loaded, that's okay
+                console.log('No cards.json file found, using localStorage or starting fresh');
+            }
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function createDefaultGridData() {
+            return {
+                0: { yes: 'N/A', no: 0 },
+                1: { yes: 0, no: 0 },
+                2: { yes: 0, no: 0 },
+                3: { yes: 0, no: 0 },
+                4: { yes: 0, no: 0 },
+                5: { yes: 0, no: 0 },
+                6: { yes: 0, no: 'N/A' }
+            };
+        }
+
+        // UI functions
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            if (cards.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            container.innerHTML = cards.map(card => {
+                const typeClass = card.type === 'text' ? 'text-card' : '';
+                const typeLabel = card.type === 'text' ? 'Text' : 'Grid';
+                
+                let preview = '';
+                if (card.type === 'grid') {
+                    preview = '<p><strong>Grid Data:</strong> 7 rows configured</p>';
+                } else {
+                    const truncated = card.content.length > 100 ? 
+                        card.content.substring(0, 100) + '...' : 
+                        card.content;
+                    preview = `<p>${truncated || 'No content'}</p>`;
+                }
+
+                return `
+                    <div class="card ${typeClass}">
+                        <div class="card-header">
+                            <h3 class="card-title">${card.name}</h3>
+                            <span class="card-type">${typeLabel}</span>
+                        </div>
+                        ${preview}
+                        <div class="card-actions">
+                            <button class="btn btn-primary" onclick="editCard('${card.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteCard('${card.id}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openCreateModal() {
+            editingCardId = null;
+            document.getElementById('modalTitle').textContent = 'Create New Card';
+            document.getElementById('saveButton').textContent = 'Save Card';
+            document.getElementById('cardForm').reset();
+            selectCardType('grid');
+            resetGridEditor();
+            document.getElementById('cardModal').style.display = 'block';
+        }
+
+        function editCard(cardId) {
+            const card = cards.find(c => c.id === cardId);
+            if (!card) return;
+
+            editingCardId = cardId;
+            document.getElementById('modalTitle').textContent = 'Edit Card';
+            document.getElementById('saveButton').textContent = 'Update Card';
+            
+            document.getElementById('cardName').value = card.name;
+            selectCardType(card.type);
+            
+            if (card.type === 'grid') {
+                loadGridData(card.data);
+            } else {
+                document.getElementById('cardContent').value = card.content || '';
+            }
+            
+            document.getElementById('cardModal').style.display = 'block';
+        }
+
+        function deleteCard(cardId) {
+            if (confirm('Are you sure you want to delete this card?')) {
+                cards = cards.filter(c => c.id !== cardId);
+                saveCards();
+                renderCards();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('cardModal').style.display = 'none';
+            editingCardId = null;
+        }
+
+        function selectCardType(type) {
+            currentCardType = type;
+            
+            // Update type selector
+            document.querySelectorAll('.type-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelector(`[data-type="${type}"]`).classList.add('selected');
+            
+            // Show/hide editors
+            document.getElementById('gridEditor').classList.toggle('active', type === 'grid');
+            document.getElementById('textEditor').classList.toggle('active', type === 'text');
+        }
+
+        function initializeGridEditor() {
+            const tbody = document.getElementById('gridTableBody');
+            tbody.innerHTML = '';
+            
+            for (let i = 0; i <= 6; i++) {
+                const row = document.createElement('tr');
+                
+                // Row number
+                const rowCell = document.createElement('td');
+                rowCell.textContent = i;
+                row.appendChild(rowCell);
+                
+                // YES column
+                const yesCell = document.createElement('td');
+                const yesInput = document.createElement('input');
+                yesInput.type = 'text';
+                yesInput.id = `grid_${i}_yes`;
+                
+                if (i === 0) {
+                    yesInput.value = 'N/A';
+                    yesInput.disabled = true;
+                } else {
+                    yesInput.value = '0';
+                    yesInput.addEventListener('input', validateNumericInput);
+                }
+                
+                yesCell.appendChild(yesInput);
+                row.appendChild(yesCell);
+                
+                // NO column
+                const noCell = document.createElement('td');
+                const noInput = document.createElement('input');
+                noInput.type = 'text';
+                noInput.id = `grid_${i}_no`;
+                
+                if (i === 6) {
+                    noInput.value = 'N/A';
+                    noInput.disabled = true;
+                } else {
+                    noInput.value = '0';
+                    noInput.addEventListener('input', validateNumericInput);
+                }
+                
+                noCell.appendChild(noInput);
+                row.appendChild(noCell);
+                
+                tbody.appendChild(row);
+            }
+        }
+
+        function resetGridEditor() {
+            for (let i = 0; i <= 6; i++) {
+                const yesInput = document.getElementById(`grid_${i}_yes`);
+                const noInput = document.getElementById(`grid_${i}_no`);
+                
+                if (i === 0) {
+                    yesInput.value = 'N/A';
+                    noInput.value = '0';
+                } else if (i === 6) {
+                    yesInput.value = '0';
+                    noInput.value = 'N/A';
+                } else {
+                    yesInput.value = '0';
+                    noInput.value = '0';
+                }
+            }
+        }
+
+        function loadGridData(data) {
+            for (let i = 0; i <= 6; i++) {
+                const yesInput = document.getElementById(`grid_${i}_yes`);
+                const noInput = document.getElementById(`grid_${i}_no`);
+                
+                if (data[i]) {
+                    yesInput.value = data[i].yes;
+                    noInput.value = data[i].no;
+                }
+            }
+        }
+
+        function getGridData() {
+            const data = {};
+            for (let i = 0; i <= 6; i++) {
+                const yesValue = document.getElementById(`grid_${i}_yes`).value;
+                const noValue = document.getElementById(`grid_${i}_no`).value;
+                
+                data[i] = {
+                    yes: yesValue === 'N/A' ? 'N/A' : parseInt(yesValue) || 0,
+                    no: noValue === 'N/A' ? 'N/A' : parseInt(noValue) || 0
+                };
+            }
+            return data;
+        }
+
+        function validateNumericInput(event) {
+            const value = event.target.value;
+            if (value !== '' && (isNaN(value) || parseInt(value) < 0)) {
+                event.target.style.borderColor = '#e74c3c';
+            } else {
+                event.target.style.borderColor = '#ddd';
+            }
+        }
+
+        // Form submission
+        document.getElementById('cardForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('cardName').value.trim();
+            if (!name) {
+                alert('Please enter a card name');
+                return;
+            }
+            
+            const card = {
+                id: editingCardId || generateId(),
+                name: name,
+                type: currentCardType,
+                created: editingCardId ? cards.find(c => c.id === editingCardId).created : Date.now(),
+                modified: Date.now()
+            };
+            
+            if (currentCardType === 'grid') {
+                card.data = getGridData();
+            } else {
+                card.content = document.getElementById('cardContent').value;
+            }
+            
+            if (editingCardId) {
+                const index = cards.findIndex(c => c.id === editingCardId);
+                cards[index] = card;
+            } else {
+                cards.push(card);
+            }
+            
+            saveCards();
+            renderCards();
+            closeModal();
+        });
+
+        // Utility functions
+        function exportCards() {
+            const dataStr = JSON.stringify(cards, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'utility-monster-cards.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearAllCards() {
+            if (confirm('Are you sure you want to delete all cards? This cannot be undone.')) {
+                cards = [];
+                saveCards();
+                renderCards();
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('cardModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
